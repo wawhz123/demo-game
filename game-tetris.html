@@ -16,32 +16,43 @@
       background: radial-gradient(circle at top, #e0f2fe 0, #bfdbfe 35%, #93c5fd 70%, #60a5fa 100%);
       color: #f9fafb;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       min-height: 100vh;
-      padding: 16px;
+      max-height: 100vh;
+      padding: 8px;
+      overflow: hidden;
     }
 
     .game-wrapper {
       width: 100%;
       max-width: 500px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
     .card {
       background: rgba(15, 23, 42, 0.96);
       border-radius: 18px;
-      padding: 16px;
+      padding: 12px;
       box-shadow:
         0 18px 45px rgba(0, 0, 0, 0.6),
         0 0 0 1px rgba(148, 163, 184, 0.18);
       backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-height: 100vh;
+      overflow: hidden;
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
     }
 
     .title-group {
@@ -121,20 +132,26 @@
     .game-container {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .game-area {
       position: relative;
       width: 100%;
-      padding-top: 200%;
+      flex: 1;
+      min-height: 0;
       border-radius: 14px;
       overflow: hidden;
       background: rgba(15, 23, 42, 0.5);
       box-shadow:
         inset 0 0 0 1px rgba(148, 163, 184, 0.32),
         0 10px 30px rgba(15, 23, 42, 0.5);
+      aspect-ratio: 1 / 2;
+      max-height: calc(100vh - 280px);
     }
 
     canvas {
@@ -150,7 +167,8 @@
       gap: 8px;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
     }
 
     .info-panel-stats {
@@ -228,11 +246,12 @@
     }
 
     .controls-hint {
-      margin-top: 8px;
+      margin-top: 4px;
       font-size: 11px;
       color: #9ca3af;
       text-align: center;
       line-height: 1.5;
+      flex-shrink: 0;
     }
 
     /* 移动端操作按钮 */
@@ -240,8 +259,9 @@
       display: none;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 8px;
       touch-action: none;
+      flex-shrink: 0;
     }
 
     .mobile-controls.show {
@@ -393,19 +413,51 @@
         font-size: 8px;
       }
 
-      .game-area {
-        padding-top: 140%;
-        max-height: 50vh;
+      body {
+        padding: 4px;
+        align-items: stretch;
       }
 
       .game-wrapper {
         max-width: 100%;
+        height: 100vh;
       }
 
       .card {
+        padding: 8px;
+        height: 100vh;
         max-height: 100vh;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        border-radius: 12px;
+      }
+
+      .header {
+        margin-bottom: 6px;
+      }
+
+      .info-panel {
+        margin-bottom: 6px;
+      }
+
+      .game-container {
+        margin-bottom: 6px;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .game-area {
+        aspect-ratio: 1 / 2;
+        max-height: calc(100vh - 240px);
+        min-height: 200px;
+      }
+
+      .mobile-controls {
+        margin-top: 6px;
+        gap: 6px;
+      }
+
+      .mobile-btn {
+        padding: 12px;
+        font-size: 16px;
       }
 
       .controls-hint {
@@ -831,42 +883,92 @@
         linesEl.textContent = lines;
       }
 
+      let actualBlockSize = BLOCK_SIZE; // 将在draw函数中更新
+      
       function drawBlock(ctx, x, y, color) {
         ctx.fillStyle = color;
-        ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        ctx.fillRect(x * actualBlockSize, y * actualBlockSize, actualBlockSize, actualBlockSize);
         ctx.strokeStyle = "rgba(15, 23, 42, 0.8)";
         ctx.lineWidth = 1;
-        ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        ctx.strokeRect(x * actualBlockSize, y * actualBlockSize, actualBlockSize, actualBlockSize);
       }
 
       function draw() {
-        const width = COLS * BLOCK_SIZE;
-        const height = ROWS * BLOCK_SIZE;
-        canvas.width = width;
-        canvas.height = height;
+        // 获取canvas容器的实际尺寸
+        const container = canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // 计算适合的BLOCK_SIZE，保持游戏宽高比
+        const idealWidth = COLS * BLOCK_SIZE;
+        const idealHeight = ROWS * BLOCK_SIZE;
+        const idealAspectRatio = idealWidth / idealHeight;
+        
+        let canvasWidth, canvasHeight;
+        const containerAspectRatio = containerWidth / containerHeight;
+        
+        if (containerAspectRatio > idealAspectRatio) {
+          // 容器更宽，以高度为准
+          canvasHeight = containerHeight;
+          canvasWidth = canvasHeight * idealAspectRatio;
+        } else {
+          // 容器更高，以宽度为准
+          canvasWidth = containerWidth;
+          canvasHeight = canvasWidth / idealAspectRatio;
+        }
+        
+        // 更新实际的块大小（全局变量，供drawBlock使用）
+        actualBlockSize = canvasWidth / COLS;
+        
+        // 计算精确的canvas尺寸，确保是actualBlockSize的整数倍
+        const finalCanvasWidth = COLS * actualBlockSize;
+        const finalCanvasHeight = ROWS * actualBlockSize;
+        
+        // 设置canvas实际像素尺寸（考虑设备像素比）
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = finalCanvasWidth * dpr;
+        canvas.height = finalCanvasHeight * dpr;
+        canvas.style.width = finalCanvasWidth + 'px';
+        canvas.style.height = finalCanvasHeight + 'px';
+        
+        ctx.scale(dpr, dpr);
+        
+        const width = finalCanvasWidth;
+        const height = finalCanvasHeight;
 
+        // 确保canvas尺寸精确匹配
+        const finalWidth = COLS * actualBlockSize;
+        const finalHeight = ROWS * actualBlockSize;
+        
         ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(0, 0, finalWidth, finalHeight);
 
         // 绘制网格线
         ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
         ctx.lineWidth = 1;
         
-        // 绘制垂直线
+        // 绘制垂直线 - 延伸到canvas边界
         for (let x = 0; x <= COLS; x++) {
+          const lineX = x * actualBlockSize;
           ctx.beginPath();
-          ctx.moveTo(x * BLOCK_SIZE, 0);
-          ctx.lineTo(x * BLOCK_SIZE, height);
+          ctx.moveTo(lineX, 0);
+          ctx.lineTo(lineX, finalHeight);
           ctx.stroke();
         }
         
-        // 绘制水平线
+        // 绘制水平线 - 延伸到canvas边界
         for (let y = 0; y <= ROWS; y++) {
+          const lineY = y * actualBlockSize;
           ctx.beginPath();
-          ctx.moveTo(0, y * BLOCK_SIZE);
-          ctx.lineTo(width, y * BLOCK_SIZE);
+          ctx.moveTo(0, lineY);
+          ctx.lineTo(finalWidth, lineY);
           ctx.stroke();
         }
+        
+        // 绘制外边框，确保边界清晰
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, finalWidth, finalHeight);
 
         // 绘制已放置的方块
         for (let y = 0; y < ROWS; y++) {
@@ -1073,9 +1175,25 @@
       }
 
       window.addEventListener("keydown", handleKeyPress);
+      
+      // 窗口大小改变时重新绘制
+      let resizeTimeout;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          if (!isGameOver && !isPaused) {
+            draw();
+          }
+        }, 100);
+      });
+      
       window.addEventListener("load", () => {
         initGame();
         update();
+        // 延迟一下确保容器尺寸已计算
+        setTimeout(() => {
+          draw();
+        }, 100);
       });
     })();
   </script>
