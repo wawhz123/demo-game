@@ -215,6 +215,70 @@
       line-height: 1.5;
     }
 
+    /* 移动端操作按钮 */
+    .mobile-controls {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+      touch-action: none;
+    }
+
+    .mobile-controls.show {
+      display: grid;
+    }
+
+    .mobile-btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      background: rgba(79, 70, 229, 0.9);
+      color: #f9fafb;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    .mobile-btn:active {
+      transform: scale(0.95);
+      background: rgba(79, 70, 229, 1);
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+    }
+
+    .mobile-btn-rotate {
+      background: rgba(6, 182, 212, 0.9);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+    }
+
+    .mobile-btn-rotate:active {
+      background: rgba(6, 182, 212, 1);
+      box-shadow: 0 2px 6px rgba(6, 182, 212, 0.4);
+    }
+
+    .mobile-btn-down {
+      background: rgba(239, 68, 68, 0.9);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .mobile-btn-down:active {
+      background: rgba(239, 68, 68, 1);
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    }
+
+    .mobile-btn-row {
+      grid-column: span 3;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     .game-over {
       position: absolute;
       inset: 0;
@@ -244,18 +308,79 @@
     }
 
     @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .header {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .btn {
+        padding: 8px 14px;
+        font-size: 13px;
+      }
+
+      .difficulty-select {
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+
       .game-container {
         grid-template-columns: 1fr;
+        gap: 12px;
       }
 
       .info-panel {
         flex-direction: row;
         overflow-x: auto;
         min-width: auto;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
       }
 
       .info-box {
         min-width: 100px;
+        padding: 10px;
+      }
+
+      .info-value {
+        font-size: 18px;
+      }
+
+      .next-piece {
+        width: 50px;
+        height: 50px;
+      }
+
+      .controls-hint {
+        font-size: 10px;
+        margin-top: 12px;
+      }
+
+      .mobile-controls.show {
+        display: grid;
+      }
+    }
+
+    /* 触摸设备检测 */
+    @media (hover: none) and (pointer: coarse) {
+      .mobile-controls {
+        display: grid;
+      }
+
+      .controls-hint {
+        display: none;
       }
     }
   </style>
@@ -331,6 +456,16 @@
       <div class="controls-hint">
         操作：← → 移动 | ↑ 旋转 | ↓ 加速 | 空格 暂停
       </div>
+
+      <div class="mobile-controls" id="mobileControls">
+        <button class="mobile-btn" id="btnLeft">←</button>
+        <button class="mobile-btn mobile-btn-rotate" id="btnRotate">↻</button>
+        <button class="mobile-btn" id="btnRight">→</button>
+        <div class="mobile-btn-row">
+          <button class="mobile-btn mobile-btn-down" id="btnDown">↓ 加速</button>
+          <button class="mobile-btn" id="btnPauseMobile">暂停</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -349,10 +484,177 @@
       const linesEl = document.getElementById("lines");
       const nextCanvases = document.querySelectorAll(".next-canvas");
       const nextCtxs = Array.from(nextCanvases).map(canvas => canvas.getContext("2d"));
+      
+      // 移动端控制按钮
+      const btnLeft = document.getElementById("btnLeft");
+      const btnRight = document.getElementById("btnRight");
+      const btnRotate = document.getElementById("btnRotate");
+      const btnDown = document.getElementById("btnDown");
+      const btnPauseMobile = document.getElementById("btnPauseMobile");
+      const mobileControls = document.getElementById("mobileControls");
 
       btnBack.addEventListener("click", () => {
         window.location.href = "index.html";
       });
+
+      // 移动端按钮事件
+      btnLeft.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        if (!isGameOver && !isPaused && currentPiece) {
+          if (isValidPosition(currentPiece, board, -1, 0)) {
+            currentPiece.x--;
+            draw();
+          }
+        }
+      });
+
+      btnRight.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        if (!isGameOver && !isPaused && currentPiece) {
+          if (isValidPosition(currentPiece, board, 1, 0)) {
+            currentPiece.x++;
+            draw();
+          }
+        }
+      });
+
+      btnRotate.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        if (!isGameOver && !isPaused && currentPiece) {
+          const rotated = rotatePiece(currentPiece);
+          if (isValidPosition(rotated, board)) {
+            currentPiece = rotated;
+            draw();
+          }
+        }
+      });
+
+      btnDown.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        if (!isGameOver && !isPaused && currentPiece) {
+          if (isValidPosition(currentPiece, board, 0, 1)) {
+            currentPiece.y++;
+            score += 1;
+            updateUI();
+            draw();
+          }
+        }
+      });
+
+      btnPauseMobile.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        if (isGameOver) return;
+        isPaused = !isPaused;
+        btnPause.textContent = isPaused ? "继续" : "暂停";
+        btnPauseMobile.textContent = isPaused ? "继续" : "暂停";
+      });
+
+      // 触摸滑动控制
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+      let lastTap = 0;
+      let hasMoved = false;
+
+      canvas.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchStartTime = Date.now();
+        hasMoved = false;
+      }, { passive: false });
+
+      canvas.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartX);
+        const deltaY = Math.abs(touch.clientY - touchStartY);
+        if (deltaX > 5 || deltaY > 5) {
+          hasMoved = true;
+        }
+      }, { passive: false });
+
+      canvas.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        if (isGameOver || isPaused) return;
+
+        const touch = e.changedTouches[0];
+        const touchEndX = touch.clientX;
+        const touchEndY = touch.clientY;
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const minSwipeDistance = 30;
+        const currentTime = Date.now();
+        const tapLength = currentTime - lastTap;
+
+        // 如果移动距离很小，认为是点击（用于双击检测）
+        if (!hasMoved && Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
+          // 双击暂停
+          if (tapLength < 300 && tapLength > 0) {
+            if (!isGameOver) {
+              isPaused = !isPaused;
+              btnPause.textContent = isPaused ? "继续" : "暂停";
+              if (btnPauseMobile) {
+                btnPauseMobile.textContent = isPaused ? "继续" : "暂停";
+              }
+            }
+            lastTap = 0; // 重置，避免连续触发
+            return;
+          }
+          lastTap = currentTime;
+          return;
+        }
+
+        // 滑动操作
+        if (!currentPiece) return;
+
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          // 水平滑动
+          if (Math.abs(deltaX) > minSwipeDistance) {
+            if (deltaX > 0) {
+              // 向右
+              if (isValidPosition(currentPiece, board, 1, 0)) {
+                currentPiece.x++;
+                draw();
+              }
+            } else {
+              // 向左
+              if (isValidPosition(currentPiece, board, -1, 0)) {
+                currentPiece.x--;
+                draw();
+              }
+            }
+          }
+        } else {
+          // 垂直滑动
+          if (Math.abs(deltaY) > minSwipeDistance) {
+            if (deltaY > 0) {
+              // 向下
+              if (isValidPosition(currentPiece, board, 0, 1)) {
+                currentPiece.y++;
+                score += 1;
+                updateUI();
+                draw();
+              }
+            } else {
+              // 向上 - 旋转
+              const rotated = rotatePiece(currentPiece);
+              if (isValidPosition(rotated, board)) {
+                currentPiece = rotated;
+                draw();
+              }
+            }
+          }
+        }
+      }, { passive: false });
+
+      // 防止页面滚动和缩放
+      document.addEventListener("touchmove", (e) => {
+        if (e.target === canvas || e.target.closest(".mobile-controls")) {
+          e.preventDefault();
+        }
+      }, { passive: false });
 
       // 游戏配置
       const COLS = 10;
@@ -681,6 +983,9 @@
         if (isGameOver) return;
         isPaused = !isPaused;
         btnPause.textContent = isPaused ? "继续" : "暂停";
+        if (btnPauseMobile) {
+          btnPauseMobile.textContent = isPaused ? "继续" : "暂停";
+        }
       });
 
       btnRestart.addEventListener("click", () => {
@@ -711,6 +1016,9 @@
         isGameOver = false;
         gameOver.classList.remove("show");
         btnPause.textContent = "暂停";
+        if (btnPauseMobile) {
+          btnPauseMobile.textContent = "暂停";
+        }
         updateUI();
         drawNextPieces();
         draw();
