@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>斗地主 - 游戏大厅</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background: radial-gradient(circle at top, #e0f2fe 0, #bfdbfe 35%, #93c5fd 70%, #60a5fa 100%);
+      color: #f9fafb;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .game-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(148, 163, 184, 0.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #f9fafb;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .btn-back {
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 6px 10px;
+    }
+
+    .btn-action {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #f9fafb;
+      padding: 10px 20px;
+      font-size: 14px;
+      margin: 4px;
+    }
+
+    .btn-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .game-area {
+      position: relative;
+      min-height: 500px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1));
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .players {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .player {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+      border: 2px solid transparent;
+    }
+
+    .player.active {
+      border-color: #fbbf24;
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+    }
+
+    .player.landlord {
+      border-color: #f59e0b;
+    }
+
+    .player-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .player-cards-count {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .center-area {
+      text-align: center;
+      margin: 20px 0;
+      min-height: 100px;
+    }
+
+    .played-cards {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .card-item {
+      width: 40px;
+      height: 56px;
+      background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1f2937;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .card-item.red {
+      color: #dc2626;
+    }
+
+    .card-item.black {
+      color: #1f2937;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .my-cards {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+    }
+
+    .my-card {
+      width: 50px;
+      height: 70px;
+      background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      border: 2px solid transparent;
+    }
+
+    .my-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .my-card.selected {
+      border-color: #fbbf24;
+      transform: translateY(-8px);
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+    }
+
+    .my-card.red {
+      color: #dc2626;
+    }
+
+    .my-card.black {
+      color: #1f2937;
+    }
+
+    .status-info {
+      text-align: center;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .game-over {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 12px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .game-over.show {
+      display: flex;
+    }
+
+    .game-over h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .my-card {
+        width: 40px;
+        height: 56px;
+        font-size: 12px;
+      }
+      .card-item {
+        width: 30px;
+        height: 42px;
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="card">
+      <div class="header">
+        <div class="title-group">
+          <div class="title">斗地主</div>
+          <div class="subtitle">三人对战，体验经典卡牌游戏</div>
+        </div>
+        <div>
+          <button id="btnBack" class="btn btn-back">← 返回</button>
+          <button id="btnRestart" class="btn btn-primary">重新开始</button>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="status-info" id="statusInfo">等待开始游戏...</div>
+
+        <div class="players">
+          <div class="player" id="player1">
+            <div class="player-name">玩家1 (AI)</div>
+            <div class="player-cards-count" id="count1">17张</div>
+          </div>
+          <div class="player" id="player2">
+            <div class="player-name">玩家2 (AI)</div>
+            <div class="player-cards-count" id="count2">17张</div>
+          </div>
+          <div class="player" id="player0">
+            <div class="player-name">你</div>
+            <div class="player-cards-count" id="count0">20张</div>
+          </div>
+        </div>
+
+        <div class="center-area">
+          <div class="played-cards" id="playedCards"></div>
+          <div class="action-buttons" id="actionButtons"></div>
+        </div>
+
+        <div class="my-cards" id="myCards"></div>
+
+        <div id="gameOver" class="game-over">
+          <h2 id="gameOverTitle">游戏结束</h2>
+          <p id="gameOverMsg"></p>
+          <button id="btnRestartOver" class="btn btn-primary" style="margin-top: 20px;">重新开始</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const btnBack = document.getElementById("btnBack");
+      const btnRestart = document.getElementById("btnRestart");
+      const btnRestartOver = document.getElementById("btnRestartOver");
+      const statusInfo = document.getElementById("statusInfo");
+      const myCards = document.getElementById("myCards");
+      const playedCards = document.getElementById("playedCards");
+      const actionButtons = document.getElementById("actionButtons");
+      const gameOver = document.getElementById("gameOver");
+      const gameOverTitle = document.getElementById("gameOverTitle");
+      const gameOverMsg = document.getElementById("gameOverMsg");
+
+      btnBack.addEventListener("click", () => {
+        window.location.href = "index.html";
+      });
+
+      // 牌面定义
+      const SUITS = ['♠', '♥', '♦', '♣'];
+      const RANKS = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
+      const JOKERS = ['小王', '大王'];
+
+      // 牌值（用于比较大小）
+      const CARD_VALUES = {
+        '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+        'J': 11, 'Q': 12, 'K': 13, 'A': 14, '2': 15,
+        '小王': 16, '大王': 17
+      };
+
+      let deck = [];
+      let players = [[], [], []]; // 0: 玩家, 1: AI1, 2: AI2
+      let bottomCards = [];
+      let landlord = -1;
+      let currentPlayer = 0;
+      let lastPlayed = null;
+      let selectedCards = [];
+      let gamePhase = 'bidding'; // bidding, playing, ended
+
+      function createDeck() {
+        const cards = [];
+        // 普通牌
+        for (const suit of SUITS) {
+          for (const rank of RANKS) {
+            cards.push({ suit, rank, value: CARD_VALUES[rank], isRed: suit === '♥' || suit === '♦' });
+          }
+        }
+        // 大小王
+        cards.push({ suit: '', rank: '小王', value: CARD_VALUES['小王'], isRed: false });
+        cards.push({ suit: '', rank: '大王', value: CARD_VALUES['大王'], isRed: true });
+        return shuffle(cards);
+      }
+
+      function shuffle(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function dealCards() {
+        deck = createDeck();
+        players = [[], [], []];
+        for (let i = 0; i < 51; i++) {
+          players[i % 3].push(deck[i]);
+        }
+        // 剩余3张作为底牌
+        bottomCards = deck.slice(51);
+        // 排序
+        players.forEach(hand => hand.sort((a, b) => a.value - b.value));
+      }
+
+      function initGame() {
+        gamePhase = 'bidding';
+        landlord = -1;
+        currentPlayer = Math.floor(Math.random() * 3);
+        selectedCards = [];
+        lastPlayed = null;
+        bottomCards = [];
+        dealCards();
+        updateDisplay();
+        statusInfo.textContent = `玩家${currentPlayer + 1}开始叫地主...`;
+        
+        // AI自动叫地主
+        setTimeout(() => {
+          handleBidding();
+        }, 1000);
+      }
+
+      function handleBidding() {
+        if (gamePhase !== 'bidding') return;
+        
+        if (currentPlayer === 0) {
+          // 玩家叫地主
+          showBiddingButtons();
+        } else {
+          // AI叫地主（简单逻辑：随机决定）
+          setTimeout(() => {
+            const willBid = Math.random() < 0.3;
+            if (willBid || landlord === -1) {
+              landlord = currentPlayer;
+              statusInfo.textContent = `玩家${currentPlayer + 1}成为地主！`;
+              players[currentPlayer].push(...bottomCards);
+              players[currentPlayer].sort((a, b) => a.value - b.value);
+              gamePhase = 'playing';
+              currentPlayer = landlord;
+              updateDisplay();
+              setTimeout(() => {
+                if (currentPlayer === 0) {
+                  statusInfo.textContent = "轮到你出牌";
+                } else {
+                  playAI();
+                }
+              }, 1000);
+            } else {
+              nextPlayer();
+            }
+          }, 800);
+        }
+      }
+
+      function showBiddingButtons() {
+        actionButtons.innerHTML = `
+          <button class="btn btn-action" id="btnBidLandlord">叫地主</button>
+          <button class="btn btn-action" id="btnPassBidding">不叫</button>
+        `;
+        document.getElementById("btnBidLandlord").addEventListener("click", bidLandlord);
+        document.getElementById("btnPassBidding").addEventListener("click", passBidding);
+      }
+
+      function bidLandlord() {
+        if (gamePhase !== 'bidding' || currentPlayer !== 0) return;
+        landlord = 0;
+        players[0].push(...bottomCards);
+        players[0].sort((a, b) => a.value - b.value);
+        gamePhase = 'playing';
+        currentPlayer = 0;
+        actionButtons.innerHTML = '';
+        updateDisplay();
+        statusInfo.textContent = "你成为地主！轮到你出牌";
+      }
+
+      function passBidding() {
+        if (gamePhase !== 'bidding' || currentPlayer !== 0) return;
+        actionButtons.innerHTML = '';
+        nextPlayer();
+      }
+
+      function nextPlayer() {
+        currentPlayer = (currentPlayer + 1) % 3;
+        if (gamePhase === 'bidding') {
+          if (landlord === -1 && currentPlayer === 0) {
+            // 如果都没叫，随机选一个
+            landlord = Math.floor(Math.random() * 3);
+            players[landlord].push(...bottomCards);
+            players[landlord].sort((a, b) => a.value - b.value);
+            gamePhase = 'playing';
+            currentPlayer = landlord;
+            statusInfo.textContent = `玩家${landlord + 1}成为地主！`;
+            updateDisplay();
+            setTimeout(() => {
+              if (currentPlayer === 0) {
+                statusInfo.textContent = "轮到你出牌";
+              } else {
+                playAI();
+              }
+            }, 1000);
+          } else {
+            handleBidding();
+          }
+        } else {
+          updateDisplay();
+          setTimeout(() => {
+            if (currentPlayer === 0) {
+              statusInfo.textContent = "轮到你出牌";
+            } else {
+              playAI();
+            }
+          }, 1000);
+        }
+      }
+
+      function playAI() {
+        if (currentPlayer === 0 || gamePhase !== 'playing') return;
+        
+        setTimeout(() => {
+          const play = getAIPlay();
+          if (play) {
+            playCards(currentPlayer, play);
+          } else {
+            statusInfo.textContent = `玩家${currentPlayer + 1}要不起`;
+            setTimeout(() => {
+              lastPlayed = null;
+              nextPlayer();
+            }, 1000);
+          }
+        }, 1000);
+      }
+
+      function getAIPlay() {
+        const hand = players[currentPlayer];
+        if (!lastPlayed) {
+          // 出单张最小的
+          return [hand[0]];
+        }
+        // 简单AI：尝试出能压过的牌
+        const lastType = getCardType(lastPlayed);
+        if (lastType === 'single') {
+          const lastValue = lastPlayed[0].value;
+          const playable = hand.find(c => c.value > lastValue);
+          return playable ? [playable] : null;
+        }
+        // 其他情况暂时跳过
+        return null;
+      }
+
+      function getCardType(cards) {
+        if (!cards || cards.length === 0) return null;
+        if (cards.length === 1) return 'single';
+        if (cards.length === 2) {
+          if (cards[0].value === cards[1].value) return 'pair';
+        }
+        if (cards.length === 3) {
+          if (cards[0].value === cards[1].value && cards[1].value === cards[2].value) return 'triple';
+        }
+        // 简化处理，更多牌型可以后续扩展
+        return 'unknown';
+      }
+
+      function canPlay(selected, last) {
+        if (!selected || selected.length === 0) return false;
+        if (!last) return true;
+        
+        const selectedType = getCardType(selected);
+        const lastType = getCardType(last);
+        
+        if (selectedType !== lastType) return false;
+        
+        if (selectedType === 'single') {
+          return selected[0].value > last[0].value;
+        }
+        if (selectedType === 'pair') {
+          return selected[0].value > last[0].value;
+        }
+        // 简化处理
+        return true;
+      }
+
+      function playCards(playerIndex, cards) {
+        const hand = players[playerIndex];
+        cards.forEach(card => {
+          const index = hand.findIndex(c => 
+            c.suit === card.suit && c.rank === card.rank && c.value === card.value
+          );
+          if (index !== -1) {
+            hand.splice(index, 1);
+          }
+        });
+        
+        lastPlayed = cards;
+        updateDisplay();
+        
+        // 检查是否获胜
+        if (hand.length === 0) {
+          endGame(playerIndex);
+          return;
+        }
+        
+        nextPlayer();
+      }
+
+      function endGame(winner) {
+        gamePhase = 'ended';
+        const isLandlordWin = (winner === landlord);
+        const isPlayerWin = (winner === 0);
+        
+        if (isPlayerWin) {
+          gameOverTitle.textContent = isLandlordWin ? "🎉 地主胜利！" : "🎉 农民胜利！";
+        } else {
+          gameOverTitle.textContent = isLandlordWin ? "地主胜利" : "农民胜利";
+        }
+        gameOverMsg.textContent = `玩家${winner + 1}获胜！`;
+        gameOver.classList.add("show");
+      }
+
+      function updateDisplay() {
+        // 更新玩家信息
+        for (let i = 0; i < 3; i++) {
+          const playerEl = document.getElementById(`player${i}`);
+          const countEl = document.getElementById(`count${i}`);
+          playerEl.classList.remove('active', 'landlord');
+          if (i === currentPlayer) playerEl.classList.add('active');
+          if (i === landlord) playerEl.classList.add('landlord');
+          countEl.textContent = `${players[i].length}张`;
+        }
+
+        // 更新玩家手牌
+        myCards.innerHTML = '';
+        players[0].forEach((card, index) => {
+          const cardEl = document.createElement('div');
+          cardEl.className = `my-card ${card.isRed ? 'red' : 'black'}`;
+          cardEl.textContent = card.suit + card.rank;
+          cardEl.onclick = () => {
+            if (gamePhase !== 'playing' || currentPlayer !== 0) return;
+            const cardIndex = selectedCards.findIndex(c => 
+              c.suit === card.suit && c.rank === card.rank
+            );
+            if (cardIndex === -1) {
+              selectedCards.push(card);
+            } else {
+              selectedCards.splice(cardIndex, 1);
+            }
+            updateMyCards();
+          };
+          myCards.appendChild(cardEl);
+        });
+        updateMyCards();
+
+        // 更新已出的牌
+        playedCards.innerHTML = '';
+        if (lastPlayed) {
+          lastPlayed.forEach(card => {
+            const cardEl = document.createElement('div');
+            cardEl.className = `card-item ${card.isRed ? 'red' : 'black'}`;
+            cardEl.textContent = card.suit + card.rank;
+            playedCards.appendChild(cardEl);
+          });
+        }
+
+        // 更新操作按钮
+        if (currentPlayer === 0 && gamePhase === 'playing') {
+          actionButtons.innerHTML = `
+            <button class="btn btn-action" id="btnPlaySelected" ${selectedCards.length === 0 ? 'disabled' : ''}>出牌</button>
+            <button class="btn btn-action" id="btnPassTurn">要不起</button>
+          `;
+          const btnPlay = document.getElementById("btnPlaySelected");
+          const btnPass = document.getElementById("btnPassTurn");
+          if (btnPlay) btnPlay.addEventListener("click", playSelected);
+          if (btnPass) btnPass.addEventListener("click", passTurn);
+        }
+      }
+
+      function updateMyCards() {
+        const cardElements = myCards.querySelectorAll('.my-card');
+        players[0].forEach((card, index) => {
+          const cardEl = cardElements[index];
+          const isSelected = selectedCards.some(c => 
+            c.suit === card.suit && c.rank === card.rank
+          );
+          if (isSelected) {
+            cardEl.classList.add('selected');
+          } else {
+            cardEl.classList.remove('selected');
+          }
+        });
+      }
+
+      function playSelected() {
+        if (currentPlayer !== 0 || selectedCards.length === 0) return;
+        if (!canPlay(selectedCards, lastPlayed)) {
+          statusInfo.textContent = "不能出这些牌，请重新选择";
+          return;
+        }
+        const cardsToPlay = [...selectedCards];
+        selectedCards = [];
+        playCards(0, cardsToPlay);
+      }
+
+      function passTurn() {
+        if (currentPlayer !== 0) return;
+        statusInfo.textContent = "你要不起";
+        setTimeout(() => {
+          lastPlayed = null;
+          nextPlayer();
+        }, 500);
+      }
+
+      function restart() {
+        gameOver.classList.remove("show");
+        initGame();
+      }
+
+      btnRestart.addEventListener("click", restart);
+      btnRestartOver.addEventListener("click", restart);
+
+      // 初始化
+      initGame();
+    })();
+  </script>
+</body>
+</html>
+

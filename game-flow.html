@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>连线不相交 - 游戏大厅</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background: radial-gradient(circle at top, #e0f2fe 0, #bfdbfe 35%, #93c5fd 70%, #60a5fa 100%);
+      color: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .game-wrapper {
+      width: 100%;
+      max-width: 480px;
+      padding: 16px;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      padding: 16px 16px 12px;
+      box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(148, 163, 184, 0.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #f9fafb;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    .btn-ghost:active {
+      transform: translateY(1px);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .btn-back {
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 6px 10px;
+    }
+
+    .btn-back:active {
+      transform: translateY(1px);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .difficulty {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+      padding: 4px 4px 0;
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: #e5e7eb;
+    }
+
+    .dot-preview {
+      display: inline-flex;
+      gap: 2px;
+    }
+
+    .dot-preview span {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .game-area {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #f9fafb 0, #e5e7eb 40%, #d1d5db 100%);
+      box-shadow:
+        inset 0 0 0 1px rgba(148, 163, 184, 0.32),
+        0 10px 30px rgba(15, 23, 42, 0.5);
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .hint-bar {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #9ca3af;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 0 4px;
+    }
+
+    .hint-text {
+      max-width: 70%;
+      line-height: 1.4;
+    }
+
+    .hint-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.7);
+      color: #e5e7eb;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: rgba(15, 23, 42, 0.96);
+      color: #e5e7eb;
+      box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(148, 163, 184, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 20;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, -4px);
+    }
+
+    .toast-success {
+      border: 1px solid rgba(52, 211, 153, 0.9);
+    }
+
+    .toast-error {
+      border: 1px solid rgba(248, 113, 113, 0.9);
+    }
+
+    @media (max-width: 400px) {
+      .card {
+        padding: 14px 12px 10px;
+      }
+      .title {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="card">
+      <div class="header">
+        <div class="title-group">
+          <div class="title">连线不相交</div>
+          <div class="subtitle">将相同颜色的圆点连起来，保证所有线段互不相交</div>
+        </div>
+        <div class="controls">
+          <button id="btnBack" class="btn btn-back">← 返回</button>
+          <div class="difficulty">
+            <span style="color: #e5e7eb; font-size: 12px;">第 <span id="levelDisplay" style="color: #60a5fa; font-weight: 600;">1</span> 关</span>
+          </div>
+          <button id="btnRestart" class="btn btn-primary">重新开始</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="status-pill">
+            <span id="statusText">点击任意圆点开始连线</span>
+          </div>
+          <div class="status-pill" id="levelInfo" style="display: none;">
+            <span id="levelText">3组颜色</span>
+          </div>
+        </div>
+        <div class="dot-preview" id="dotPreview"></div>
+      </div>
+
+      <div class="game-area">
+        <canvas id="gameCanvas"></canvas>
+      </div>
+
+      <div class="hint-bar">
+        <div class="hint-text">
+          - 同色连线才会生效；<br />
+          - 双击空白处可清空当前未完成的连线。
+        </div>
+        <div class="hint-badge" id="hintBadge">所有线不相交则胜利 🎉</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const btnRestart = document.getElementById("btnRestart");
+      const btnBack = document.getElementById("btnBack");
+      const statusText = document.getElementById("statusText");
+      const dotPreview = document.getElementById("dotPreview");
+      const toastEl = document.getElementById("toast");
+      const levelDisplay = document.getElementById("levelDisplay");
+      const levelInfo = document.getElementById("levelInfo");
+      const levelText = document.getElementById("levelText");
+      const hintBadge = document.getElementById("hintBadge");
+
+      btnBack.addEventListener("click", () => {
+        window.location.href = "index.html";
+      });
+
+      // 关卡系统
+      let currentLevel = 1;
+      let maxLevel = 1;
+
+      const COLORS = [
+        "#ff3333", // 亮红
+        "#4a9eff", // 亮蓝
+        "#00ff88", // 亮绿
+        "#ffaa00", // 亮橙
+        "#aa66ff", // 亮紫
+        "#ffdd00", // 亮黄
+        "#00ddff", // 亮青
+        "#ff66aa", // 亮粉
+        "#00ffcc", // 亮青绿
+        "#6688ff", // 亮靛蓝
+      ];
+
+      const DOT_RADIUS = 12;
+      const ACTIVE_RADIUS = 15;
+      const LINE_WIDTH = 4;
+      const ACTIVE_LINE_WIDTH = 5;
+      const PATH_MARGIN = DOT_RADIUS + 4;
+
+      let dots = [];
+      let lines = [];
+      let currentStartDot = null;
+      let currentPath = null;
+      let isPointerDown = false;
+      let canvasRect = null;
+
+      function resizeCanvas() {
+        const parent = canvas.parentElement;
+        const rect = parent.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        canvasRect = rect;
+        draw();
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+
+      function showToast(message, type = "success") {
+        toastEl.textContent = message;
+        toastEl.classList.remove("toast-success", "toast-error", "show");
+        toastEl.classList.add(type === "success" ? "toast-success" : "toast-error");
+        requestAnimationFrame(() => {
+          toastEl.classList.add("show");
+        });
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => {
+          toastEl.classList.remove("show");
+        }, 1800);
+      }
+
+      function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      function distance(a, b) {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function getPairCountForLevel(level) {
+        if (level <= 1) return 3;
+        if (level <= 2) return 4;
+        if (level <= 3) return 5;
+        if (level <= 4) return 6;
+        if (level <= 5) return 7;
+        return Math.min(7 + Math.floor((level - 5) / 5), 10);
+      }
+
+      function updateLevelDisplay() {
+        levelDisplay.textContent = currentLevel;
+        const pairCount = getPairCountForLevel(currentLevel);
+        levelText.textContent = `${pairCount}组颜色`;
+        levelInfo.style.display = "flex";
+      }
+
+      function generateDots(pairCount) {
+        dots = [];
+        lines = [];
+        currentStartDot = null;
+        currentPath = null;
+        statusText.textContent = "点击任意圆点开始连线";
+        updateLevelDisplay();
+
+        dotPreview.innerHTML = "";
+        for (let i = 0; i < pairCount; i++) {
+          const color = COLORS[i % COLORS.length];
+          const span1 = document.createElement("span");
+          const span2 = document.createElement("span");
+          span1.style.background = color;
+          span2.style.background = color;
+          dotPreview.appendChild(span1);
+          dotPreview.appendChild(span2);
+        }
+
+        const width = canvasRect ? canvasRect.width : 320;
+        const height = canvasRect ? canvasRect.height : 320;
+
+        let padding = 32;
+        if (pairCount >= 6) {
+          padding = 26;
+        } else if (pairCount === 5) {
+          padding = 28;
+        }
+
+        let minDistance = DOT_RADIUS * 4;
+        if (pairCount >= 6) {
+          minDistance = DOT_RADIUS * 3.1;
+        } else if (pairCount === 5) {
+          minDistance = DOT_RADIUS * 3.4;
+        }
+
+        let idCounter = 1;
+        for (let p = 0; p < pairCount; p++) {
+          const colorIndex = p % COLORS.length;
+
+          for (let i = 0; i < 2; i++) {
+            let placed = false;
+            let guard = 0;
+            while (!placed && guard < 300) {
+              guard++;
+              const candidate = {
+                id: idCounter,
+                x: randomBetween(padding, width - padding),
+                y: randomBetween(padding, height - padding),
+                colorIndex,
+              };
+              let tooClose = false;
+              for (const d of dots) {
+                if (distance(candidate, d) < minDistance) {
+                  tooClose = true;
+                  break;
+                }
+              }
+              if (!tooClose) {
+                dots.push(candidate);
+                idCounter++;
+                placed = true;
+              }
+            }
+          }
+        }
+        draw();
+      }
+
+      function getDotAtPoint(x, y) {
+        const rect = canvasRect;
+        if (!rect) return null;
+        const rx = x - rect.left;
+        const ry = y - rect.top;
+
+        for (const dot of dots) {
+          const d = distance({ x: rx, y: ry }, dot);
+          if (d <= ACTIVE_RADIUS + 4) return dot;
+        }
+        return null;
+      }
+
+      function clearLineOfDot(dot) {
+        lines = lines.filter((l) => l.aId !== dot.id && l.bId !== dot.id);
+      }
+
+      function segmentsIntersect(p1, p2, p3, p4) {
+        function cross(a, b, c) {
+          return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        }
+        const d1 = cross(p1, p2, p3);
+        const d2 = cross(p1, p2, p4);
+        const d3 = cross(p3, p4, p1);
+        const d4 = cross(p3, p4, p2);
+
+        if (
+          ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+          ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+        ) {
+          return true;
+        }
+        return false;
+      }
+
+      function pointToSegmentDistance(p, a, b) {
+        const vx = b.x - a.x;
+        const vy = b.y - a.y;
+        if (vx === 0 && vy === 0) {
+          return distance(p, a);
+        }
+        const t =
+          ((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy);
+        const tClamped = Math.max(0, Math.min(1, t));
+        const proj = {
+          x: a.x + tClamped * vx,
+          y: a.y + tClamped * vy,
+        };
+        return distance(p, proj);
+      }
+
+      function checkWin() {
+        const pairCount = dots.length / 2;
+        if (lines.length !== pairCount) {
+          return false;
+        }
+
+        const usedDotIds = new Set();
+        for (const line of lines) {
+          const a = dots.find((d) => d.id === line.aId);
+          const b = dots.find((d) => d.id === line.bId);
+          if (!a || !b) return false;
+          if (a.colorIndex !== b.colorIndex) return false;
+
+          if (usedDotIds.has(a.id) || usedDotIds.has(b.id)) return false;
+          usedDotIds.add(a.id);
+          usedDotIds.add(b.id);
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+          const l1 = lines[i];
+          const pts1 = l1.points || [];
+          for (let j = i + 1; j < lines.length; j++) {
+            const l2 = lines[j];
+            const pts2 = l2.points || [];
+
+            const shared =
+              l1.aId === l2.aId ||
+              l1.aId === l2.bId ||
+              l1.bId === l2.aId ||
+              l1.bId === l2.bId;
+
+            for (let i1 = 0; i1 < pts1.length - 1; i1++) {
+              for (let i2 = 0; i2 < pts2.length - 1; i2++) {
+                const p1 = pts1[i1];
+                const p2 = pts1[i1 + 1];
+                const p3 = pts2[i2];
+                const p4 = pts2[i2 + 1];
+
+                if (shared) {
+                  const isEndpointSeg1 =
+                    (i1 === 0 || i1 === pts1.length - 2);
+                  const isEndpointSeg2 =
+                    (i2 === 0 || i2 === pts2.length - 2);
+                  if (isEndpointSeg1 && isEndpointSeg2) continue;
+                }
+
+                if (segmentsIntersect(p1, p2, p3, p4)) {
+                  return false;
+                }
+              }
+            }
+          }
+        }
+
+        return true;
+      }
+
+      function handleWin() {
+        statusText.textContent = "恭喜你！所有线段都不相交！";
+        showToast(`第${currentLevel}关完成！准备进入下一关... 🎉`, "success");
+        
+        setTimeout(() => {
+          currentLevel++;
+          if (currentLevel > maxLevel) {
+            maxLevel = currentLevel;
+          }
+          const nextPairCount = getPairCountForLevel(currentLevel);
+          generateDots(nextPairCount);
+          showToast(`第${currentLevel}关开始！加油 💪`, "success");
+        }, 2000);
+      }
+
+      function handleIncorrect() {
+        showToast("还有线段相交或未全部连完～再想想", "error");
+      }
+
+      function draw() {
+        if (!canvasRect) return;
+        const width = canvasRect.width;
+        const height = canvasRect.height;
+
+        ctx.clearRect(0, 0, width, height);
+
+        const gradient = ctx.createRadialGradient(
+          width / 2,
+          height * 0.25,
+          10,
+          width / 2,
+          height / 2,
+          Math.max(width, height)
+        );
+        gradient.addColorStop(0, "rgba(56, 189, 248, 0.05)");
+        gradient.addColorStop(1, "rgba(15, 23, 42, 0.9)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.lineCap = "round";
+        for (const line of lines) {
+          const color = COLORS[line.colorIndex % COLORS.length];
+          const pts = line.points || [];
+          if (pts.length < 2) continue;
+
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let i = 1; i < pts.length; i++) {
+            ctx.lineTo(pts[i].x, pts[i].y);
+          }
+          ctx.strokeStyle = color;
+          ctx.lineWidth = LINE_WIDTH;
+          ctx.globalAlpha = 0.9;
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        if (currentPath && currentPath.points && currentPath.points.length > 1) {
+          const pts = currentPath.points;
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let i = 1; i < pts.length; i++) {
+            ctx.lineTo(pts[i].x, pts[i].y);
+          }
+          const color = COLORS[currentStartDot.colorIndex % COLORS.length];
+          ctx.strokeStyle = color;
+          ctx.lineWidth = ACTIVE_LINE_WIDTH;
+          ctx.setLineDash([10, 6]);
+          ctx.globalAlpha = 0.9;
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 1;
+        }
+
+        for (const dot of dots) {
+          const color = COLORS[dot.colorIndex % COLORS.length];
+          const isActive = currentStartDot && currentStartDot.id === dot.id;
+          const r = isActive ? ACTIVE_RADIUS : DOT_RADIUS;
+
+          ctx.beginPath();
+          ctx.arc(dot.x, dot.y, r + 4, 0, Math.PI * 2);
+          ctx.fillStyle = isActive
+            ? "rgba(251, 191, 36, 0.28)"
+            : "rgba(148, 163, 184, 0.22)";
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(dot.x, dot.y, r, 0, Math.PI * 2);
+          const radial = ctx.createRadialGradient(
+            dot.x - 3,
+            dot.y - 3,
+            4,
+            dot.x,
+            dot.y,
+            r
+          );
+          radial.addColorStop(0, "#ffffff");
+          radial.addColorStop(0.15, color);
+          radial.addColorStop(1, "#020617");
+          ctx.fillStyle = radial;
+          ctx.fill();
+
+          ctx.lineWidth = isActive ? 2 : 1.4;
+          ctx.strokeStyle = "rgba(15, 23, 42, 0.9)";
+          ctx.stroke();
+        }
+      }
+
+      function handlePointerDown(clientX, clientY) {
+        if (!canvasRect) return;
+        isPointerDown = true;
+        const dot = getDotAtPoint(clientX, clientY);
+        if (dot) {
+          currentStartDot = dot;
+          currentPath = {
+            colorIndex: dot.colorIndex,
+            aId: dot.id,
+            points: [{ x: dot.x, y: dot.y }],
+          };
+          statusText.textContent = "拖动到相同颜色的圆点完成连线";
+          draw();
+        } else {
+          currentStartDot = null;
+          currentPath = null;
+        }
+      }
+
+      function handlePointerMove(clientX, clientY) {
+        if (!isPointerDown || !currentStartDot || !canvasRect || !currentPath) return;
+        let x = clientX - canvasRect.left;
+        let y = clientY - canvasRect.top;
+        const maxX = canvasRect.width - PATH_MARGIN;
+        const maxY = canvasRect.height - PATH_MARGIN;
+        const minX = PATH_MARGIN;
+        const minY = PATH_MARGIN;
+        if (x < minX) x = minX;
+        if (x > maxX) x = maxX;
+        if (y < minY) y = minY;
+        if (y > maxY) y = maxY;
+        const last = currentPath.points[currentPath.points.length - 1];
+        if (!last || distance(last, { x, y }) > 4) {
+          currentPath.points.push({ x, y });
+        }
+        draw();
+      }
+
+      function handlePointerUp(clientX, clientY) {
+        if (!isPointerDown) return;
+        isPointerDown = false;
+
+        if (currentStartDot && canvasRect && currentPath && currentPath.points.length > 1) {
+          const targetDot = getDotAtPoint(clientX, clientY);
+          if (targetDot && targetDot.id !== currentStartDot.id) {
+            if (targetDot.colorIndex === currentStartDot.colorIndex) {
+              const forbiddenIds = new Set([currentStartDot.id, targetDot.id]);
+              let passedOtherDot = false;
+              const pts = currentPath.points;
+              outer: for (let i = 0; i < pts.length - 1; i++) {
+                const p1 = pts[i];
+                const p2 = pts[i + 1];
+                for (const d of dots) {
+                  if (forbiddenIds.has(d.id)) continue;
+                  const dist = pointToSegmentDistance(d, p1, p2);
+                  if (dist <= DOT_RADIUS + 2) {
+                    passedOtherDot = true;
+                    break outer;
+                  }
+                }
+              }
+
+              if (passedOtherDot) {
+                showToast("线条中间不能碰到其他圆点～", "error");
+              } else {
+                clearLineOfDot(currentStartDot);
+                clearLineOfDot(targetDot);
+                currentPath.points[currentPath.points.length - 1] = {
+                  x: targetDot.x,
+                  y: targetDot.y,
+                };
+                lines.push({
+                  aId: currentStartDot.id,
+                  bId: targetDot.id,
+                  colorIndex: currentStartDot.colorIndex,
+                  points: currentPath.points.slice(),
+                });
+                statusText.textContent = "继续连剩下的同色圆点";
+                if (checkWin()) {
+                  handleWin();
+                } else {
+                  const pairCount = dots.length / 2;
+                  if (lines.length === pairCount) {
+                    handleIncorrect();
+                  }
+                }
+              }
+            } else {
+              showToast("颜色不一致，连线无效～", "error");
+            }
+          }
+        }
+
+        currentStartDot = null;
+        currentPath = null;
+        if (lines.length === 0) {
+          statusText.textContent = "点击任意圆点开始连线";
+        }
+        draw();
+      }
+
+      let lastTapTime = 0;
+      function handleDoubleTapOrClick(clientX, clientY) {
+        const now = Date.now();
+        if (now - lastTapTime < 350) {
+          currentStartDot = null;
+          currentPath = null;
+          lines = [];
+          statusText.textContent = "当前连线已清空，重新尝试布局吧";
+          showToast("已清空当前连线", "success");
+          draw();
+        }
+        lastTapTime = now;
+      }
+
+      canvas.addEventListener("mousedown", (e) => {
+        handlePointerDown(e.clientX, e.clientY);
+      });
+      canvas.addEventListener("mousemove", (e) => {
+        handlePointerMove(e.clientX, e.clientY);
+      });
+      window.addEventListener("mouseup", (e) => {
+        handlePointerUp(e.clientX, e.clientY);
+      });
+
+      canvas.addEventListener("click", (e) => {
+        const dot = getDotAtPoint(e.clientX, e.clientY);
+        if (!dot) {
+          handleDoubleTapOrClick(e.clientX, e.clientY);
+        }
+      });
+
+      canvas.addEventListener(
+        "touchstart",
+        (e) => {
+          const t = e.touches[0];
+          handlePointerDown(t.clientX, t.clientY);
+        },
+        { passive: false }
+      );
+      canvas.addEventListener(
+        "touchmove",
+        (e) => {
+          const t = e.touches[0];
+          handlePointerMove(t.clientX, t.clientY);
+        },
+        { passive: false }
+      );
+      canvas.addEventListener(
+        "touchend",
+        (e) => {
+          const t = e.changedTouches[0];
+          handlePointerUp(t.clientX, t.clientY);
+          handleDoubleTapOrClick(t.clientX, t.clientY);
+        },
+        { passive: false }
+      );
+
+      btnRestart.addEventListener("click", () => {
+        currentLevel = 1;
+        maxLevel = 1;
+        const count = getPairCountForLevel(currentLevel);
+        generateDots(count);
+        showToast("已重置到第1关，重新开始挑战！", "success");
+      });
+
+      function init() {
+        resizeCanvas();
+        currentLevel = 1;
+        maxLevel = 1;
+        const count = getPairCountForLevel(currentLevel);
+        generateDots(count);
+      }
+
+      window.addEventListener("load", init);
+    })();
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>游戏大厅</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background: radial-gradient(circle at top, #e0f2fe 0, #bfdbfe 35%, #93c5fd 70%, #60a5fa 100%);
+      color: #f9fafb;
+      min-height: 100vh;
+      padding: 20px 16px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .game-card {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    .game-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .game-card:active {
+      transform: translateY(-2px);
+    }
+
+    .game-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(167, 139, 250, 0.2));
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .game-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .game-desc {
+      font-size: 12px;
+      color: #9ca3af;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .game-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(96, 165, 250, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(96, 165, 250, 0.3);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      color: #9ca3af;
+      font-size: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .game-card {
+        padding: 16px;
+      }
+
+      .game-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+      }
+
+      .header h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎮 游戏大厅</h1>
+      <p>选择你喜欢的游戏开始挑战吧</p>
+    </div>
+
+    <div class="games-grid">
+      <div class="game-card" onclick="window.location.href='game-flow.html'">
+        <div class="game-badge">热门</div>
+        <div class="game-icon">🔗</div>
+        <div class="game-title">连线不相交</div>
+        <div class="game-desc">将相同颜色的圆点连起来，保证所有线段互不相交</div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='game-tetris.html'">
+        <div class="game-badge">经典</div>
+        <div class="game-icon">🎮</div>
+        <div class="game-title">俄罗斯方块</div>
+        <div class="game-desc">消除方块，挑战高分，三种难度可选</div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='game-2048.html'">
+        <div class="game-badge">益智</div>
+        <div class="game-icon">🔢</div>
+        <div class="game-title">2048</div>
+        <div class="game-desc">合并数字方块，挑战达到2048</div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='game-doudizhu.html'">
+        <div class="game-badge">卡牌</div>
+        <div class="game-icon">🃏</div>
+        <div class="game-title">斗地主</div>
+        <div class="game-desc">三人对战，体验经典卡牌游戏</div>
+      </div>
+
+      <div class="game-card" onclick="window.location.href='game-blackjack.html'">
+        <div class="game-badge">经典</div>
+        <div class="game-icon">🂡</div>
+        <div class="game-title">21点</div>
+        <div class="game-desc">挑战庄家，接近21点获胜</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>更多精彩游戏正在开发中，敬请期待 ✨</p>
+    </div>
+  </div>
+</body>
+</html>
