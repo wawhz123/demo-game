@@ -36,6 +36,19 @@ demo-flow/
    - 点击 Save
    - 等待几分钟，访问 `https://你的用户名.github.io/demo-flow/`
 
+3. **代码更新后如何生效**
+   ```bash
+   # 修改代码后，执行以下命令
+   git add .
+   git commit -m "更新说明"
+   git push origin main
+   ```
+   - **生效时间**：推送后 1-5 分钟内自动更新
+   - **加速更新**：在 Settings → Pages 中点击 Save 强制刷新
+   - **清除缓存**：访问网站时按 Ctrl+F5（Windows）或 Cmd+Shift+R（Mac）
+   
+   📖 **详细说明**：查看 [GITHUB_PAGES.md](./GITHUB_PAGES.md) 获取完整的部署和更新指南
+
 ### 方式二：Vercel（推荐，免费，快速）
 
 1. **安装Vercel CLI**
